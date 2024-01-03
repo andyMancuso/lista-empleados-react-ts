@@ -3,13 +3,16 @@ import { type User } from '../../types'
 interface Props {
   users: User[]
   isDefaultColor: boolean
+  deleteRow: (email: string) => void
 }
 
 const Users = (props: Props) => {
   const {
     users,
-    isDefaultColor
+    isDefaultColor,
+    deleteRow,
   } = props
+
 
   return (
     <>
@@ -25,27 +28,28 @@ const Users = (props: Props) => {
         </thead>
 
         <tbody>
-          {
-            users.map((user, index) => {
-              const backgroundColor = index % 2 === 0 ? '#333' : '#555'
+          {users.map((user, index) => {
+            const backgroundColor = index % 2 === 0 ? '#333' : '#555'
 
-              return (
-                <tr
-                  key={user.login.uuid}
-                  style={{ backgroundColor: isDefaultColor ? backgroundColor : 'transparent' }}
-                >
-                  <td>
-                    <img src={user.picture.large} />
-                  </td>
-                  <td>{user.name.first}</td>
-                  <td>{user.name.last}</td>
-                  <td>{user.location.country}</td>
-                  <td>
-                    <button>Delete</button>
-                  </td>
-                </tr>
-              )
-            })
+            return (
+              <tr
+                key={user.login.uuid}
+                style={{ backgroundColor: isDefaultColor ? backgroundColor : 'transparent' }}
+              >
+                <td>
+                  <img src={user.picture.large} />
+                </td>
+                <td>{user.name.first}</td>
+                <td>{user.name.last}</td>
+                <td>{user.location.country}</td>
+                <td>
+                  <button onClick={() => { deleteRow(user.email) }}>
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            )
+          })
           }
         </tbody>
       </table>

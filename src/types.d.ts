@@ -1,3 +1,9 @@
+declare global {
+  interface Array <T> {
+    toSorted(fn: (a: T, b: T) => number): T[]
+  }
+}
+
 export interface APIResults {
   results: User[]
   info: Info

@@ -41,6 +41,7 @@ module.exports = {
     '@typescript-eslint/triple-slash-reference': 'off',
     '@typescript-eslint/comma-dangle': 'off',
     'comma-dangle': ['error', 'always-multiline'],
+    '@typescript-eslint/method-signature-style': 'off',
   },
   settings: {
     react: {
