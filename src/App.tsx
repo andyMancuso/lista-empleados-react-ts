@@ -7,7 +7,9 @@ const App = () => {
   const [users, setUsers] = useState<User[]>([])
   const [isDefaultColor, setIsDefaultColor] = useState(false)
   const [isSorting, setIsSorting] = useState(false)
+  const [countryFilter, setCountryFilter] = useState('')
   const originalUsers = useRef<User[]>([])
+
 
   useEffect(() => {
     fetch('https://randomuser.me/api?results=100')
@@ -22,10 +24,19 @@ const App = () => {
   }, [])
 
 
-  const sortedUsers = isSorting ? users.toSorted((a, b) => {
-    return a.location.country.localeCompare(b.location.country)
-  })
+  const filteredByCountry = countryFilter
+    ? users.filter((user => {
+      return user.location.country.toLowerCase().includes(countryFilter.toLowerCase())
+    }))
     : users
+
+
+  const sortedUsers = isSorting
+    ? filteredByCountry.toSorted((a, b) => {
+      return a.location.country.localeCompare(b.location.country)
+    })
+    : filteredByCountry
+
 
   const changeColors = () => {
     setIsDefaultColor(prev => !prev)
@@ -44,6 +55,7 @@ const App = () => {
     setUsers(originalUsers.current)
   }
 
+
   return (
     <>
       <h1 style={{ fontSize: '4rem' }}>Users List</h1>
@@ -53,7 +65,7 @@ const App = () => {
         margin: '0 auto',
         justifyContent: 'space-evenly',
         width: '100%',
-        maxWidth: 500,
+        maxWidth: 800,
       }}>
         <button onClick={changeColors}>
           {isDefaultColor ? 'Default colors' : 'Change colors'}
@@ -66,6 +78,12 @@ const App = () => {
         <button onClick={resetUsers}>
           Reset
         </button>
+
+        <input
+          type='text'
+          placeholder='Filter by country'
+          onChange={e => { setCountryFilter(e.target.value) }}
+        />
 
       </header>
 
