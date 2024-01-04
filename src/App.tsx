@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 import Users from './components/Users'
 import { type User } from './types'
@@ -7,7 +7,7 @@ const App = () => {
   const [users, setUsers] = useState<User[]>([])
   const [isDefaultColor, setIsDefaultColor] = useState(false)
   const [isSorting, setIsSorting] = useState(false)
-  const [countryFilter, setCountryFilter] = useState('')
+  const [countryFilterValue, setCountryFilterValue] = useState('')
   const originalUsers = useRef<User[]>([])
 
 
@@ -24,18 +24,19 @@ const App = () => {
   }, [])
 
 
-  const filteredByCountry = countryFilter
-    ? users.filter((user => {
-      return user.location.country.toLowerCase().includes(countryFilter.toLowerCase())
-    }))
-    : users
+  const filteredByCountry = useMemo(() => {
+    return countryFilterValue
+      ? users.filter((user => {
+        return user.location.country.toLowerCase().includes(countryFilterValue.toLowerCase())
+      }))
+      : users
+  }, [countryFilterValue, users])
 
-
-  const sortedUsers = isSorting
-    ? filteredByCountry.toSorted((a, b) => {
-      return a.location.country.localeCompare(b.location.country)
-    })
-    : filteredByCountry
+  const sortedUsers = useMemo(() => {
+    return isSorting
+      ? filteredByCountry.toSorted((a, b) => a.location.country.localeCompare(b.location.country))
+      : filteredByCountry
+  }, [filteredByCountry, isSorting])
 
 
   const changeColors = () => {
@@ -82,7 +83,7 @@ const App = () => {
         <input
           type='text'
           placeholder='Filter by country'
-          onChange={e => { setCountryFilter(e.target.value) }}
+          onChange={e => { setCountryFilterValue(e.target.value) }}
         />
 
       </header>
