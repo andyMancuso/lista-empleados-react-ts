@@ -1,9 +1,11 @@
-import { type User } from '../../types'
+import { TableHeader } from '..'
+import { type SortBy, type User } from '../../types.d'
 
 interface Props {
-  users: User[]
+  users: User[] | undefined
   isDefaultColor: boolean
   deleteRow: (email: string) => void
+  handleSortBy: (newSortingValue: SortBy) => void
 }
 
 const Users = (props: Props) => {
@@ -11,6 +13,7 @@ const Users = (props: Props) => {
     users,
     isDefaultColor,
     deleteRow,
+    handleSortBy,
   } = props
 
 
@@ -20,21 +23,37 @@ const Users = (props: Props) => {
         <thead>
           <tr>
             <th>Picture</th>
-            <th>Name</th>
-            <th>Last name</th>
-            <th>Country</th>
+            <TableHeader
+              title='Name'
+              value='name'
+              handleSortBy={handleSortBy}
+            />
+            <TableHeader
+              title='Last Name'
+              value='last'
+              handleSortBy={handleSortBy}
+            />
+            <TableHeader
+              title='Country'
+              value='country'
+              handleSortBy={handleSortBy}
+            />
             <th>Actions</th>
           </tr>
         </thead>
 
         <tbody>
-          {users.map((user, index) => {
+          {users?.map((user, index) => {
             const backgroundColor = index % 2 === 0 ? '#333' : '#555'
 
             return (
               <tr
                 key={user.login.uuid}
-                style={{ backgroundColor: isDefaultColor ? backgroundColor : 'transparent' }}
+                style={{
+                  backgroundColor: isDefaultColor
+                    ? backgroundColor
+                    : 'transparent',
+                }}
               >
                 <td>
                   <img src={user.picture.large} />
