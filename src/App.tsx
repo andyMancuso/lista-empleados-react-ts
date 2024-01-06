@@ -9,11 +9,17 @@ const App = () => {
   const [sortingValue, setSortingValue] = useState<SortBy>(SortBy.NONE)
   const [countryFilterValue, setCountryFilterValue] = useState('')
   const originalUsers = useRef<User[]>([])
-
+  const [isLoading, setIsloading] = useState(false)
+  const [isError, setIsError] = useState(false)
 
   useEffect(() => {
-    fetch('https://randomuser.me/api?results=100')
-      .then(async res => await res.json())
+    setIsloading(true)
+    fetch('https://randomuser.me/api?results=10')
+      .then(
+        async res => {
+          if (!res.ok) throw new Error('Something went wrong')
+          return await res.json()
+        })
       .then(res => {
         setUsers(res.results)
         originalUsers.current = res.results
@@ -21,6 +27,7 @@ const App = () => {
       .catch(err => {
         console.log(err)
       })
+      .finally(() => { setIsloading(false) })
   }, [])
 
   const isSortingByCountry = () => {
@@ -104,12 +111,23 @@ const App = () => {
 
       </header>
 
-      <Users
-        users={sortedByValue}
-        isDefaultColor={isDefaultColor}
-        deleteRow={deleteRow}
-        handleSortBy={handleSortBy}
-      />
+      <main>
+        {isLoading
+          ? <p>Loading...</p>
+          : isError
+            ? <p>Error</p>
+            : users.length === 0
+              ? <p>No users</p>
+              : <Users
+                users={sortedByValue}
+                isDefaultColor={isDefaultColor}
+                deleteRow={deleteRow}
+                handleSortBy={handleSortBy}
+              />
+        }
+
+      </main>
+
     </>
 
   )
