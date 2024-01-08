@@ -48,7 +48,7 @@ const Users = (props: Props) => {
 
             return (
               <tr
-                key={user.login.uuid}
+                key={user.login.sha1}
                 style={{
                   backgroundColor: isDefaultColor
                     ? backgroundColor
