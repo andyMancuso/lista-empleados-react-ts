@@ -3,6 +3,7 @@ import './App.css'
 import Users from './components/Users'
 import { SortBy, type User } from './types.d'
 import Pagination from './components/Pagination'
+import { Header } from './components'
 
 const fetchUsers = async (page: number) => {
   return await fetch(`https://randomuser.me/api?results=10&seed=pepeloco&page=${page}`)
@@ -29,13 +30,14 @@ const App = () => {
 
     fetchUsers(currentPage)
       .then(fetchedUsers => {
-        setUsers(prev => {
+        setUsers(prevUsers => {
           const uniqueFetchedUsers = fetchedUsers.filter((oldUser: { login: { uuid: string } }) => (
-            !prev.some(
+            !prevUsers.some(
               (existingUser: { login: { uuid: string } }) =>
                 existingUser.login.uuid === oldUser.login.uuid)
           ))
-          const newUsers = [...prev, ...uniqueFetchedUsers]
+          const newUsers = [...prevUsers, ...uniqueFetchedUsers]
+          originalUsers.current = newUsers
           return newUsers
         })
       })
@@ -102,37 +104,16 @@ const App = () => {
 
   return (
     <>
-      <h1 style={{ fontSize: '4rem' }}>Users List</h1>
-
-      <header style={{
-        display: 'flex',
-        margin: '0 auto',
-        justifyContent: 'space-evenly',
-        width: '100%',
-        maxWidth: 800,
-      }}>
-        <button onClick={changeColors}>
-          {isDefaultColor ? 'Default colors' : 'Change colors'}
-        </button>
-
-        <button onClick={isSortingByCountry}>
-          {sortingValue === SortBy.COUNTRY ? 'Unsort' : 'Sort by country'}
-        </button>
-
-        <button onClick={resetUsers}>
-          Reset
-        </button>
-
-        <input
-          type='text'
-          placeholder='Filter by country'
-          onChange={e => { setCountryFilterValue(e.target.value) }}
-        />
-
-      </header>
+      <Header
+        changeColors={changeColors}
+        isSortingByCountry={isSortingByCountry}
+        resetUsers={resetUsers}
+        setCountryFilterValue={setCountryFilterValue}
+        isDefaultColor={isDefaultColor}
+        sortingValue={sortingValue}
+      />
 
       <main>
-
         {users.length > 0 && <div>
           <Users
             users={sortedByValue}
