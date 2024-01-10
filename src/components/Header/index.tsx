@@ -18,6 +18,7 @@ const Header = (props: Props) => {
     isDefaultColor,
     sortingValue,
   } = props
+
   return (
     <>
       <h1 style={{ fontSize: '4rem' }}>Users List</h1>
@@ -49,7 +50,6 @@ const Header = (props: Props) => {
 
       </header>
     </>
-
   )
 }
 

@@ -1,52 +1,48 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import './App.css'
 import Users from './components/Users'
 import { SortBy, type User } from './types.d'
-import Pagination from './components/Pagination'
 import { Header } from './components'
+import { type QueryFunction, type QueryKey, useInfiniteQuery } from '@tanstack/react-query'
 
-const fetchUsers = async (page: number) => {
-  return await fetch(`https://randomuser.me/api?results=10&seed=pepeloco&page=${page}`)
+const fetchUsers = async ({ pageParam }: { pageParam?: number }) => {
+  return await fetch(`https://randomuser.me/api?results=10&seed=pepeloco&page=${pageParam}`)
     .then(async res => {
       if (!res.ok) throw new Error('Something went wrong')
       return await res.json()
     })
-    .then(res => res.results)
+    .then(res => {
+      const currentPage = Number(res.info.page)
+      const nextPage = currentPage > 10 ? undefined : currentPage + 1
+      const users: User[] = (res.results)
+      return {
+        users,
+        nextPage,
+      }
+    })
 }
 
 const App = () => {
-  const [users, setUsers] = useState<User[]>([])
+  const {
+    isLoading,
+    isError,
+    data,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+  } = useInfiniteQuery<{ users: User[], nextPage: number }>({
+    queryKey: ['users'],
+    queryFn: fetchUsers as QueryFunction<{ users: User[], nextPage: number }, QueryKey, unknown>,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+    initialPageParam: 0,
+  })
+  // const users: User[] = useMemo(() => data?.pages?.[0].users ?? [], [data?.pages])
+  const users: User[] = useMemo(() => data?.pages?.flatMap(page => page.users) ?? [], [data?.pages])
+  console.log(users)
+
   const [isDefaultColor, setIsDefaultColor] = useState(false)
   const [sortingValue, setSortingValue] = useState<SortBy>(SortBy.NONE)
   const [countryFilterValue, setCountryFilterValue] = useState('')
-  const originalUsers = useRef<User[]>([])
-  const [isLoading, setIsloading] = useState(false)
-  const [isError, setIsError] = useState(false)
-  const [currentPage, setCurrentPage] = useState(1)
-
-  useEffect(() => {
-    setIsloading(true)
-    setIsError(false)
-
-    fetchUsers(currentPage)
-      .then(fetchedUsers => {
-        setUsers(prevUsers => {
-          const uniqueFetchedUsers = fetchedUsers.filter((oldUser: { login: { uuid: string } }) => (
-            !prevUsers.some(
-              (existingUser: { login: { uuid: string } }) =>
-                existingUser.login.uuid === oldUser.login.uuid)
-          ))
-          const newUsers = [...prevUsers, ...uniqueFetchedUsers]
-          originalUsers.current = newUsers
-          return newUsers
-        })
-      })
-      .catch(err => {
-        setIsError(err)
-        console.log(err)
-      })
-      .finally(() => { setIsloading(false) })
-  }, [currentPage])
 
 
   const isSortingByCountry = () => {
@@ -83,21 +79,18 @@ const App = () => {
     }
   }, [inputFiltered, sortingValue])
 
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage)
-  }
 
   const changeColors = () => {
     setIsDefaultColor(prev => !prev)
   }
 
   const deleteRow = (email: string) => {
-    const filteredUsers = users.filter((user) => user.email !== email)
-    setUsers(filteredUsers)
+    // const filteredUsers = users.filter((user) => user.email !== email)
+    // setUsers(filteredUsers)
   }
 
   const resetUsers = () => {
-    setUsers(originalUsers.current)
+    void refetch()
     setSortingValue(SortBy.NONE)
   }
 
@@ -121,17 +114,21 @@ const App = () => {
             deleteRow={deleteRow}
             handleSortBy={handleSortBy}
           />
-          <Pagination
-            currentPage={currentPage}
-            handlePageChange={handlePageChange}
-          />
+
+          {hasNextPage && <button
+            style={{ margin: '30px 0 30px 0' }}
+            onClick={() => { void fetchNextPage() }}
+          >
+            Load more users
+          </button>
+          }
+
         </div>
         }
         {isLoading && <p style={{ marginTop: '60px' }}>Loading...</p>}
         {isError && <p style={{ marginTop: '60px' }}>Something went wrong</p>}
         {users.length === 0 && <p style={{ marginTop: '60px' }}>No users found</p>}
       </main>
-
     </>
 
   )

@@ -1,12 +1,10 @@
 
 interface Props {
-  currentPage: number
-  handlePageChange: (newPage: number) => void
+  handlePageChange: () => void
 }
 
 const Pagination = (props: Props) => {
   const {
-    currentPage,
     handlePageChange,
   } = props
 
@@ -18,7 +16,7 @@ const Pagination = (props: Props) => {
       margin: '30px 0 30px 0',
     }}>
       <button
-        onClick={() => { handlePageChange(currentPage + 1) }}
+        onClick={() => handlePageChange}
       >
         Load more users
       </button>
