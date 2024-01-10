@@ -1,27 +1,49 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import './App.css'
 import Users from './components/Users'
 import { SortBy, type User } from './types.d'
+import { Header } from './components'
+import { type QueryFunction, type QueryKey, useInfiniteQuery } from '@tanstack/react-query'
+
+const fetchUsers = async ({ pageParam }: { pageParam?: number }) => {
+  return await fetch(`https://randomuser.me/api?results=10&seed=pepeloco&page=${pageParam}`)
+    .then(async res => {
+      if (!res.ok) throw new Error('Something went wrong')
+      return await res.json()
+    })
+    .then(res => {
+      const currentPage = Number(res.info.page)
+      const nextPage = currentPage > 10 ? undefined : currentPage + 1
+      const users: User[] = (res.results)
+      return {
+        users,
+        nextPage,
+      }
+    })
+}
 
 const App = () => {
-  const [users, setUsers] = useState<User[]>([])
+  const {
+    isLoading,
+    isError,
+    data,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+  } = useInfiniteQuery<{ users: User[], nextPage: number }>({
+    queryKey: ['users'],
+    queryFn: fetchUsers as QueryFunction<{ users: User[], nextPage: number }, QueryKey, unknown>,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+    initialPageParam: 0,
+  })
+  // const users: User[] = useMemo(() => data?.pages?.[0].users ?? [], [data?.pages])
+  const users: User[] = useMemo(() => data?.pages?.flatMap(page => page.users) ?? [], [data?.pages])
+  console.log(users)
+
   const [isDefaultColor, setIsDefaultColor] = useState(false)
   const [sortingValue, setSortingValue] = useState<SortBy>(SortBy.NONE)
   const [countryFilterValue, setCountryFilterValue] = useState('')
-  const originalUsers = useRef<User[]>([])
 
-
-  useEffect(() => {
-    fetch('https://randomuser.me/api?results=100')
-      .then(async res => await res.json())
-      .then(res => {
-        setUsers(res.results)
-        originalUsers.current = res.results
-      })
-      .catch(err => {
-        console.log(err)
-      })
-  }, [])
 
   const isSortingByCountry = () => {
     const newSortingValue = sortingValue === SortBy.NONE
@@ -63,53 +85,50 @@ const App = () => {
   }
 
   const deleteRow = (email: string) => {
-    const filteredUsers = users.filter((user) => user.email !== email)
-    setUsers(filteredUsers)
+    // const filteredUsers = users.filter((user) => user.email !== email)
+    // setUsers(filteredUsers)
   }
 
   const resetUsers = () => {
-    setUsers(originalUsers.current)
+    void refetch()
     setSortingValue(SortBy.NONE)
   }
 
 
   return (
     <>
-      <h1 style={{ fontSize: '4rem' }}>Users List</h1>
-
-      <header style={{
-        display: 'flex',
-        margin: '0 auto',
-        justifyContent: 'space-evenly',
-        width: '100%',
-        maxWidth: 800,
-      }}>
-        <button onClick={changeColors}>
-          {isDefaultColor ? 'Default colors' : 'Change colors'}
-        </button>
-
-        <button onClick={isSortingByCountry}>
-          {sortingValue === SortBy.COUNTRY ? 'Unsort' : 'Sort by country'}
-        </button>
-
-        <button onClick={resetUsers}>
-          Reset
-        </button>
-
-        <input
-          type='text'
-          placeholder='Filter by country'
-          onChange={e => { setCountryFilterValue(e.target.value) }}
-        />
-
-      </header>
-
-      <Users
-        users={sortedByValue}
+      <Header
+        changeColors={changeColors}
+        isSortingByCountry={isSortingByCountry}
+        resetUsers={resetUsers}
+        setCountryFilterValue={setCountryFilterValue}
         isDefaultColor={isDefaultColor}
-        deleteRow={deleteRow}
-        handleSortBy={handleSortBy}
+        sortingValue={sortingValue}
       />
+
+      <main>
+        {users.length > 0 && <div>
+          <Users
+            users={sortedByValue}
+            isDefaultColor={isDefaultColor}
+            deleteRow={deleteRow}
+            handleSortBy={handleSortBy}
+          />
+
+          {hasNextPage && <button
+            style={{ margin: '30px 0 30px 0' }}
+            onClick={() => { void fetchNextPage() }}
+          >
+            Load more users
+          </button>
+          }
+
+        </div>
+        }
+        {isLoading && <p style={{ marginTop: '60px' }}>Loading...</p>}
+        {isError && <p style={{ marginTop: '60px' }}>Something went wrong</p>}
+        {users.length === 0 && <p style={{ marginTop: '60px' }}>No users found</p>}
+      </main>
     </>
 
   )
