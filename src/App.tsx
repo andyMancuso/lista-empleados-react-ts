@@ -107,8 +107,8 @@ const App = () => {
         </div>
         }
         {isLoading && <p style={{ marginTop: '60px' }}>Loading...</p>}
-        {isError && <p style={{ marginTop: '60px' }}>Something went wrong</p>}
-        {users.length === 0 && <p style={{ marginTop: '60px' }}>No users found</p>}
+        {!isLoading && isError && <p style={{ marginTop: '60px' }}>Something went wrong</p>}
+        {!isLoading && users.length === 0 && <p style={{ marginTop: '60px' }}>No users found</p>}
       </main>
     </>
 
