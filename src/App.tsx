@@ -1,43 +1,21 @@
 import { useMemo, useState } from 'react'
 import './App.css'
 import Users from './components/Users'
-import { SortBy, type User } from './types.d'
+import { SortBy } from './types.d'
 import { Header } from './components'
-import { type QueryFunction, type QueryKey, useInfiniteQuery } from '@tanstack/react-query'
+import { useUsers } from './hooks/useUsers'
 
-const fetchUsers = async ({ pageParam }: { pageParam?: number }) => {
-  return await fetch(`https://randomuser.me/api?results=10&seed=pepeloco&page=${pageParam}`)
-    .then(async res => {
-      if (!res.ok) throw new Error('Something went wrong')
-      return await res.json()
-    })
-    .then(res => {
-      const currentPage = Number(res.info.page)
-      const nextPage = currentPage > 10 ? undefined : currentPage + 1
-      const users: User[] = (res.results)
-      return {
-        users,
-        nextPage,
-      }
-    })
-}
 
 const App = () => {
   const {
     isLoading,
     isError,
-    data,
+    users,
     refetch,
     fetchNextPage,
     hasNextPage,
-  } = useInfiniteQuery<{ users: User[], nextPage: number }>({
-    queryKey: ['users'],
-    queryFn: fetchUsers as QueryFunction<{ users: User[], nextPage: number }, QueryKey, unknown>,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
-    initialPageParam: 0,
-  })
-  // const users: User[] = useMemo(() => data?.pages?.[0].users ?? [], [data?.pages])
-  const users: User[] = useMemo(() => data?.pages?.flatMap(page => page.users) ?? [], [data?.pages])
+  } = useUsers()
+
   console.log(users)
 
   const [isDefaultColor, setIsDefaultColor] = useState(false)
@@ -115,13 +93,16 @@ const App = () => {
             handleSortBy={handleSortBy}
           />
 
-          {hasNextPage && <button
-            style={{ margin: '30px 0 30px 0' }}
+          <button
+            disabled={!hasNextPage}
+            style={{
+              margin: '30px 0 30px 0',
+            }}
             onClick={() => { void fetchNextPage() }}
           >
-            Load more users
+            {hasNextPage ? 'Load more users' : 'No more users'}
           </button>
-          }
+
 
         </div>
         }
