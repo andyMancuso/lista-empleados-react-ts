@@ -20,6 +20,15 @@ export const useUsers = () => {
     },
   )
 
+
+  const deleteUser = (email: string) => {
+    if (data) {
+      data.pages.forEach(page => {
+        page.users = page.users.filter(user => user.email !== email)
+      })
+    }
+  }
+
   return {
     isLoading,
     isError,
@@ -28,5 +37,7 @@ export const useUsers = () => {
     refetch,
     fetchNextPage,
     hasNextPage,
+    deleteUser,
   }
 }
+

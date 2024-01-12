@@ -4,6 +4,7 @@ import Users from './components/Users'
 import { SortBy } from './types.d'
 import { Header } from './components'
 import { useUsers } from './hooks/useUsers'
+import { useQueryClient } from '@tanstack/react-query'
 
 
 const App = () => {
@@ -14,9 +15,8 @@ const App = () => {
     refetch,
     fetchNextPage,
     hasNextPage,
+    deleteUser,
   } = useUsers()
-
-  console.log(users)
 
   const [isDefaultColor, setIsDefaultColor] = useState(false)
   const [sortingValue, setSortingValue] = useState<SortBy>(SortBy.NONE)
@@ -62,10 +62,13 @@ const App = () => {
     setIsDefaultColor(prev => !prev)
   }
 
-  const deleteRow = (email: string) => {
-    // const filteredUsers = users.filter((user) => user.email !== email)
-    // setUsers(filteredUsers)
-  }
+  // const deleteRow = (email: string) => {
+  //   const filteredUsers = users.filter((user) => user.email !== email)
+  //   queryClient.setQueryData(['users'], () => {
+  //     const newUsers = [...filteredUsers]
+  //     return newUsers
+  //   })
+  // }
 
   const resetUsers = () => {
     void refetch()
@@ -89,7 +92,7 @@ const App = () => {
           <Users
             users={sortedByValue}
             isDefaultColor={isDefaultColor}
-            deleteRow={deleteRow}
+            deleteRow={() => deleteUser}
             handleSortBy={handleSortBy}
           />
 
