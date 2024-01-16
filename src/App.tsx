@@ -1,44 +1,22 @@
 import { useMemo, useState } from 'react'
 import './App.css'
 import Users from './components/Users'
-import { SortBy, type User } from './types.d'
+import { SortBy } from './types.d'
 import { Header } from './components'
-import { type QueryFunction, type QueryKey, useInfiniteQuery } from '@tanstack/react-query'
+import { useUsers } from './hooks/useUsers'
+import { useQueryClient } from '@tanstack/react-query'
 
-const fetchUsers = async ({ pageParam }: { pageParam?: number }) => {
-  return await fetch(`https://randomuser.me/api?results=10&seed=pepeloco&page=${pageParam}`)
-    .then(async res => {
-      if (!res.ok) throw new Error('Something went wrong')
-      return await res.json()
-    })
-    .then(res => {
-      const currentPage = Number(res.info.page)
-      const nextPage = currentPage > 10 ? undefined : currentPage + 1
-      const users: User[] = (res.results)
-      return {
-        users,
-        nextPage,
-      }
-    })
-}
 
 const App = () => {
   const {
     isLoading,
     isError,
-    data,
+    users,
     refetch,
     fetchNextPage,
     hasNextPage,
-  } = useInfiniteQuery<{ users: User[], nextPage: number }>({
-    queryKey: ['users'],
-    queryFn: fetchUsers as QueryFunction<{ users: User[], nextPage: number }, QueryKey, unknown>,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
-    initialPageParam: 0,
-  })
-  // const users: User[] = useMemo(() => data?.pages?.[0].users ?? [], [data?.pages])
-  const users: User[] = useMemo(() => data?.pages?.flatMap(page => page.users) ?? [], [data?.pages])
-  console.log(users)
+    deleteUser,
+  } = useUsers()
 
   const [isDefaultColor, setIsDefaultColor] = useState(false)
   const [sortingValue, setSortingValue] = useState<SortBy>(SortBy.NONE)
@@ -84,10 +62,13 @@ const App = () => {
     setIsDefaultColor(prev => !prev)
   }
 
-  const deleteRow = (email: string) => {
-    // const filteredUsers = users.filter((user) => user.email !== email)
-    // setUsers(filteredUsers)
-  }
+  // const deleteRow = (email: string) => {
+  //   const filteredUsers = users.filter((user) => user.email !== email)
+  //   queryClient.setQueryData(['users'], () => {
+  //     const newUsers = [...filteredUsers]
+  //     return newUsers
+  //   })
+  // }
 
   const resetUsers = () => {
     void refetch()
@@ -111,23 +92,26 @@ const App = () => {
           <Users
             users={sortedByValue}
             isDefaultColor={isDefaultColor}
-            deleteRow={deleteRow}
+            deleteRow={() => deleteUser}
             handleSortBy={handleSortBy}
           />
 
-          {hasNextPage && <button
-            style={{ margin: '30px 0 30px 0' }}
+          <button
+            disabled={!hasNextPage}
+            style={{
+              margin: '30px 0 30px 0',
+            }}
             onClick={() => { void fetchNextPage() }}
           >
-            Load more users
+            {hasNextPage ? 'Load more users' : 'No more users'}
           </button>
-          }
+
 
         </div>
         }
         {isLoading && <p style={{ marginTop: '60px' }}>Loading...</p>}
-        {isError && <p style={{ marginTop: '60px' }}>Something went wrong</p>}
-        {users.length === 0 && <p style={{ marginTop: '60px' }}>No users found</p>}
+        {!isLoading && isError && <p style={{ marginTop: '60px' }}>Something went wrong</p>}
+        {!isLoading && users.length === 0 && <p style={{ marginTop: '60px' }}>No users found</p>}
       </main>
     </>
 
